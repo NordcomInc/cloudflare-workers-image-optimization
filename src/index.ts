@@ -1,5 +1,3 @@
-import { optimizeImage } from 'wasm-image-optimization';
-
 const isValidUrl = (url: string) => {
 	try {
 		new URL(url);
@@ -33,19 +31,45 @@ const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext):
 		return cachedResponse;
 	}
 
-	const width = params.get('w');
+	let width: null | number = null;
+	if (params.get('w')) {
+		width = Number.parseInt(params.get('w')!);
+	}
+
+	let height: null | number = null;
+	if (params.get('h')) {
+		height = Number.parseInt(params.get('h')!);
+	}
+
+	if (!width && !height) {
+		return new Response('Width or height not supplied', { status: 400 });
+	} else if (!width && height) {
+		width = height;
+	} else if (width && !height) {
+		height = width;
+	}
+
 	const quality = params.get('q');
 
-	const [srcImage, contentType] = await fetch(imageUrl, { cf: { cacheKey: imageUrl } })
+	const [image, contentType] = await fetch(imageUrl, {
+		cf: {
+			cacheKey: new URL(imageUrl).pathname || imageUrl,
+			image: {
+				width: width!,
+				height: height!,
+				quality: quality ? parseInt(quality) : undefined,
+			},
+		},
+	})
 		.then(async (res) => (res.ok ? ([await res.arrayBuffer(), res.headers.get('content-type')] as const) : []))
 		.catch(() => []);
 
-	if (!srcImage) {
+	if (!image) {
 		return new Response('image not found', { status: 404 });
 	}
 
 	if (contentType && ['image/svg+xml', 'image/gif'].includes(contentType)) {
-		const response = new Response(srcImage, {
+		const response = new Response(image, {
 			headers: {
 				'Content-Type': contentType,
 				'Cache-Control': 'public, max-age=31536000, immutable',
@@ -55,16 +79,16 @@ const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext):
 		return response;
 	}
 
-	const format = isWebp ? 'webp' : contentType === 'image/jpeg' ? 'jpeg' : 'png';
-	const image = await optimizeImage({
+	//const format = isWebp ? 'webp' : contentType === 'image/jpeg' ? 'jpeg' : 'png';
+	/*const image = await optimizeImage({
 		image: srcImage,
 		width: width ? parseInt(width) : undefined,
 		quality: quality ? parseInt(quality) : undefined,
 		format,
-	});
+	});*/
 	const response = new Response(image, {
 		headers: {
-			'Content-Type': `image/${format}`,
+			'Content-Type': contentType!,//`image/${format}`,
 			'Cache-Control': 'public, max-age=31536000, immutable',
 			date: new Date().toUTCString(),
 		},
