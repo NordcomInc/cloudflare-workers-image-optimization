@@ -1,0 +1,25 @@
+name: 🚚 Deploy
+
+on:
+    workflow_run:
+        workflows: ['Deployment Workflow']
+        branches: ['master']
+        types:
+            - completed
+    repository_dispatch:
+
+jobs:
+    deploy:
+        name: 🚚 Deploy
+        runs-on: ubuntu-latest
+        env:
+            CI: true
+        steps:
+            - name: 🕶️ Checkout repository
+              uses: actions/checkout@v4
+
+            - name: 🏗️ Build & 🚚 Deploy Worker
+              uses: cloudflare/wrangler-action@v3
+              with:
+                  apiToken: ${{ secrets.CF_API_TOKEN }}
+                  accountId: ${{ secrets.CF_ACCOUNT_ID }}
