@@ -18,7 +18,10 @@ const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext):
 	const url = new URL(request.url);
 
 	const params = url.searchParams;
-	const imageUrl = params.get('url');
+	let imageUrl = params.get('url');
+	if (imageUrl?.startsWith('/')) {
+		imageUrl = `https://demo.nordcom.io${imageUrl}`;
+	}
 	if (!imageUrl || !isValidUrl(imageUrl)) {
 		return new Response('url is required', { status: 400 });
 	}
@@ -88,7 +91,7 @@ const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext):
 	});*/
 	const response = new Response(image, {
 		headers: {
-			'Content-Type': contentType!,//`image/${format}`,
+			'Content-Type': contentType!, //`image/${format}`,
 			'Cache-Control': 'public, max-age=31536000, immutable',
 			date: new Date().toUTCString(),
 		},
