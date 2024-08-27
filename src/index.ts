@@ -10,6 +10,10 @@ const isValidUrl = (url: string) => {
 const fallbackDomain = 'demo.nordcom.io'; // TODO.
 
 const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext): Promise<Response> => {
+	if (request.headers.get('via') && /image-resizing/.test(request.headers.get('via')!)) {
+		return await fetch(request);
+	}
+
 	const accept = request.headers.get('accept');
 	const isWebp =
 		accept
@@ -63,6 +67,7 @@ const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext):
 				width: width!,
 				height: height!,
 				quality: quality ? parseInt(quality) : undefined,
+				metadata: 'copyright',
 			},
 		},
 	})
