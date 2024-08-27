@@ -7,6 +7,8 @@ const isValidUrl = (url: string) => {
 	}
 };
 
+const fallbackDomain = 'demo.nordcom.io'; // TODO.
+
 const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext): Promise<Response> => {
 	const accept = request.headers.get('accept');
 	const isWebp =
@@ -20,7 +22,7 @@ const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext):
 	const params = url.searchParams;
 	let imageUrl = params.get('url');
 	if (imageUrl?.startsWith('/')) {
-		imageUrl = `https://demo.nordcom.io${imageUrl}`;
+		imageUrl = `https://${fallbackDomain}${imageUrl}`;
 	}
 	if (!imageUrl || !isValidUrl(imageUrl)) {
 		return new Response('url is required', { status: 400 });
