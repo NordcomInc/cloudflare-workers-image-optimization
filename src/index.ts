@@ -15,12 +15,6 @@ const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext):
     }
 
     const accept = request.headers.get('accept');
-    const isWebp =
-        accept
-            ?.split(',')
-            .map((format) => format.trim())
-            .some((format) => ['image/webp', '*/*', 'image/*'].includes(format)) ?? true;
-
     const url = new URL(request.url);
 
     const params = url.searchParams;
@@ -58,13 +52,9 @@ const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext):
         height = width;
     }
 
-    let format = 'auto';
-    if (accept) {
-        if (/image\/avif/.test(accept)) {
-            format = 'avif';
-        } else if (/image\/webp/.test(accept)) {
-            format = 'webp';
-        }
+    let format = 'webp';
+    if (accept && /image\/avif/.test(accept)) {
+        format = 'avif';
     }
 
     const quality = params.has('q') ? Number.parseInt(params.get('q')!) : undefined;
@@ -73,7 +63,7 @@ const handleRequest = async (request: Request, _env: {}, ctx: ExecutionContext):
         cf: {
             cacheKey: new URL(imageUrl).pathname || imageUrl,
             image: {
-                format: format! as any,
+                format: format!,
                 width: width!,
                 height: height!,
                 quality: quality,
